@@ -7,6 +7,10 @@ target/
 .gradle
 build/
 .vagrant
+*.db
+*.iws
+.ideaDataSources/
+dataSources/
 
 # Ignore Gradle GUI config
 gradle-app.setting

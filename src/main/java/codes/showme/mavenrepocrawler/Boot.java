@@ -1,9 +1,10 @@
 package codes.showme.mavenrepocrawler;
 
-import com.avaje.ebean.Ebean;
-import com.avaje.ebean.EbeanServer;
-import com.avaje.ebean.EbeanServerFactory;
-import com.avaje.ebean.config.ServerConfig;
+import codes.showme.mavenrepocrawler.domain.Link;
+import io.ebean.Ebean;
+import io.ebean.EbeanServer;
+import io.ebean.EbeanServerFactory;
+import io.ebean.config.ServerConfig;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
@@ -38,6 +39,10 @@ public class Boot implements PageProcessor {
         if (matcher.find()) {
             String group = matcher.group(1);
             page.putField("link", group);
+            Link link = new Link();
+            link.setLink(group);
+            link.setLevel(group.split("\\/").length - 1);
+            link.save();
         }
 
 
@@ -55,7 +60,7 @@ public class Boot implements PageProcessor {
 
     }
 
-    private void initEbeanServer(){
+    private void initEbeanServer() {
         ServerConfig config = new ServerConfig();
         config.setName("sqlite");
 //        config.setCurrentUserProvider(() -> "mysql");
@@ -65,6 +70,7 @@ public class Boot implements PageProcessor {
 
         config.setDefaultServer(true);
         config.setRegister(true);
+        config.addPackage("codes.showme.mavenrepocrawler.domain");
 
         EbeanServer ebeanServer = EbeanServerFactory.create(config);
 

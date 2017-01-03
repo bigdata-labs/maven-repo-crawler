@@ -1,13 +1,23 @@
 package codes.showme.mavenrepocrawler.domain;
 
+
+import io.ebean.Ebean;
+import io.ebean.EbeanServer;
+import io.ebean.Model;
+
 import javax.persistence.*;
+import java.io.Serializable;
 
 /**
  * Created by jack on 1/2/17.
  */
 @Entity
 @Table(name = "links")
-public class Link {
+public class Link extends Model implements Serializable {
+
+    private static EbeanServer ebeanServer = Ebean.getDefaultServer();
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
@@ -37,6 +47,10 @@ public class Link {
 
     @Column(name = "pom", columnDefinition = "TEXT")
     private String pom;
+
+    public void save(){
+        ebeanServer.save(this);
+    }
 
     public String getLink() {
         return link;
