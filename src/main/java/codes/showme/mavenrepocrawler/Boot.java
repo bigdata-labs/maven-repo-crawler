@@ -5,11 +5,13 @@ import io.ebean.Ebean;
 import io.ebean.EbeanServer;
 import io.ebean.EbeanServerFactory;
 import io.ebean.config.ServerConfig;
+import org.apache.commons.lang3.StringUtils;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.processor.PageProcessor;
 
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -19,31 +21,38 @@ import java.util.stream.Collectors;
  */
 public class Boot implements PageProcessor {
 
-    private static final Pattern CURRENT_URL_PATTERN = Pattern.compile("\\/maven2(\\/([\\/\\w \\.-]*)*)");
-    private Site site = Site.me().setRetryTimes(3).setSleepTime(100).setTimeOut(10000);
+    private Site site = Site.me().setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36").setRetryTimes(3).setSleepTime(100).setTimeOut(10000);
+    private static final String ROOT_LINK = "https://repo1.maven.org/maven2/";
+    private static final Pattern SUFFIXES_PATTERN = Pattern.compile("\\w*\\.(sha1|jar|pom|xml|md5|ass)");
 
     @Override
     public void process(Page page) {
         page.addTargetRequests(page.getHtml().links().all().stream()
-                .filter(l -> l.endsWith("/")
-                        || l.endsWith(".pom")
-                        || l.endsWith(".md5")
-                        || l.endsWith(".sha1")
-                        || l.endsWith(".asc")
-                        || l.endsWith(".xml"))
+                .filter(l -> l.endsWith("/"))
                 .collect(Collectors.toList()));
-
         page.addTargetRequest(page.getRequest());
-        String h1 = page.getHtml().$("h1").get();
-        Matcher matcher = CURRENT_URL_PATTERN.matcher(h1);
+
+        String currentUrl = page.getUrl().get();
+        String relativePath = currentUrl.substring(currentUrl.indexOf(ROOT_LINK) + ROOT_LINK.length());
+
+        Link link = new Link();
+
+
+        Matcher matcher = SUFFIXES_PATTERN.matcher(relativePath);
         if (matcher.find()) {
-            String group = matcher.group(1);
-            page.putField("link", group);
-            Link link = new Link();
-            link.setLink(group);
-            link.setLevel(group.split("\\/").length - 1);
-            link.save();
+            link.setPathType(matcher.group(1));
         }
+
+        link.setLink(relativePath);
+
+        String[] pathSplitted = relativePath.split("\\/");
+
+        link.setLevel(pathSplitted.length);
+
+        if (pathSplitted.length > 1) {
+            link.setParentLink(StringUtils.join(Arrays.asList(pathSplitted).subList(0, pathSplitted.length - 1), "/") + "/");
+        }
+
 
 
     }
@@ -56,7 +65,7 @@ public class Boot implements PageProcessor {
     public static void main(String[] args) {
         Boot boot = new Boot();
         boot.initEbeanServer();
-        Spider.create(boot).addUrl("https://repo1.maven.org/maven2/").thread(20).run();
+        Spider.create(boot).addUrl(ROOT_LINK).thread(20).run();
 
     }
 

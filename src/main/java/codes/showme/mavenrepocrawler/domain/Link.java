@@ -17,10 +17,10 @@ public class Link extends Model implements Serializable {
 
     private static EbeanServer ebeanServer = Ebean.getDefaultServer();
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
+
     @Version
     private long version;
 
@@ -33,23 +33,23 @@ public class Link extends Model implements Serializable {
     @Column(name = "parent_link", length = 1024)
     private String parentLink;
 
-    @Column(name = "has_child_link")
-    private boolean hasChildLink;
+    @Column(name = "path_type", length = 1024)
+    private String pathType;
 
-    @Column(name = "md5", length = 2048)
-    private String md5Value;
-
-    @Column(name = "sha1", length = 2048)
-    private String sha1Value;
 
     @Column(name = "level")
     private int level;
 
-    @Column(name = "pom", columnDefinition = "TEXT")
-    private String pom;
-
-    public void save(){
+    public void save() {
         ebeanServer.save(this);
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 
     public String getLink() {
@@ -68,52 +68,12 @@ public class Link extends Model implements Serializable {
         this.parentLink = parentLink;
     }
 
-    public boolean isHasChildLink() {
-        return hasChildLink;
-    }
-
-    public void setHasChildLink(boolean hasChildLink) {
-        this.hasChildLink = hasChildLink;
-    }
-
-    public String getMd5Value() {
-        return md5Value;
-    }
-
-    public void setMd5Value(String md5Value) {
-        this.md5Value = md5Value;
-    }
-
-    public String getSha1Value() {
-        return sha1Value;
-    }
-
-    public void setSha1Value(String sha1Value) {
-        this.sha1Value = sha1Value;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
     public int getLevel() {
         return level;
     }
 
     public void setLevel(int level) {
         this.level = level;
-    }
-
-    public String getPom() {
-        return pom;
-    }
-
-    public void setPom(String pom) {
-        this.pom = pom;
     }
 
     public long getVersion() {
@@ -124,16 +84,12 @@ public class Link extends Model implements Serializable {
         this.version = version;
     }
 
-    @Override
-    public String toString() {
-        return "Link{" +
-                "id=" + id +
-                ", link='" + link + '\'' +
-                ", parentLink='" + parentLink + '\'' +
-                ", hasChildLink=" + hasChildLink +
-                ", md5Value='" + md5Value + '\'' +
-                ", sha1Value='" + sha1Value + '\'' +
-                '}';
+    public String getPathType() {
+        return pathType;
+    }
+
+    public void setPathType(String pathType) {
+        this.pathType = pathType;
     }
 
     @Override
@@ -143,18 +99,18 @@ public class Link extends Model implements Serializable {
 
         Link link1 = (Link) o;
 
-        if (id != link1.id) return false;
+        if (level != link1.level) return false;
         if (link != null ? !link.equals(link1.link) : link1.link != null) return false;
-        if (md5Value != null ? !md5Value.equals(link1.md5Value) : link1.md5Value != null) return false;
-        return sha1Value != null ? sha1Value.equals(link1.sha1Value) : link1.sha1Value == null;
+        if (parentLink != null ? !parentLink.equals(link1.parentLink) : link1.parentLink != null) return false;
+        return pathType != null ? pathType.equals(link1.pathType) : link1.pathType == null;
     }
 
     @Override
     public int hashCode() {
-        int result = (int) (id ^ (id >>> 32));
-        result = 31 * result + (link != null ? link.hashCode() : 0);
-        result = 31 * result + (md5Value != null ? md5Value.hashCode() : 0);
-        result = 31 * result + (sha1Value != null ? sha1Value.hashCode() : 0);
+        int result = link != null ? link.hashCode() : 0;
+        result = 31 * result + (parentLink != null ? parentLink.hashCode() : 0);
+        result = 31 * result + (pathType != null ? pathType.hashCode() : 0);
+        result = 31 * result + level;
         return result;
     }
 }
