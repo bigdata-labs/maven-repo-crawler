@@ -23,7 +23,7 @@ public class Boot implements PageProcessor {
 
     private Site site = Site.me().setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36").setRetryTimes(3).setSleepTime(100).setTimeOut(10000);
     private static final String ROOT_LINK = "https://repo1.maven.org/maven2/";
-    private static final Pattern SUFFIXES_PATTERN = Pattern.compile("\\w*\\.(sha1|jar|pom|xml|md5|ass)");
+    private static final Pattern SUFFIXES_PATTERN = Pattern.compile("\\w*\\.(sha1|jar|pom|xml|md5|asc|properties)");
 
     @Override
     public void process(Page page) {
@@ -37,23 +37,26 @@ public class Boot implements PageProcessor {
 
         Link link = new Link();
 
-
+        //  path type like pom jar xml
         Matcher matcher = SUFFIXES_PATTERN.matcher(relativePath);
         if (matcher.find()) {
             link.setPathType(matcher.group(1));
         }
 
+        // relativePath: org/springframework/boot/spring-boot-parent/1.3.1.RELEASE/
         link.setLink(relativePath);
 
         String[] pathSplitted = relativePath.split("\\/");
 
+        //the level of path org/springframework/boot/spring-boot-parent/1.3.1.RELEASE/ is 5
         link.setLevel(pathSplitted.length);
 
+        //the parent link of path org/springframework/boot/spring-boot-parent/1.3.1.RELEASE/ is org/springframework/boot/spring-boot-parent/
         if (pathSplitted.length > 1) {
             link.setParentLink(StringUtils.join(Arrays.asList(pathSplitted).subList(0, pathSplitted.length - 1), "/") + "/");
         }
 
-
+        link.save();
 
     }
 
