@@ -4,9 +4,15 @@ package codes.showme.mavenrepocrawler.domain;
 import io.ebean.Ebean;
 import io.ebean.EbeanServer;
 import io.ebean.Model;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Created by jack on 1/2/17.
@@ -15,7 +21,13 @@ import java.io.Serializable;
 @Table(name = "links")
 public class Link extends Model implements Serializable {
 
-    private static EbeanServer ebeanServer = Ebean.getDefaultServer();
+    public static EbeanServer ebeanServer = Ebean.getDefaultServer();
+
+    private static final long serialVersionUID = -4211827981727329075L;
+
+
+    private static final Pattern SUFFIXES_PATTERN = Pattern.compile("\\w*\\.(sha1|jar|pom|xml|md5|asc|properties)");
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -42,6 +54,43 @@ public class Link extends Model implements Serializable {
 
     public void save() {
         ebeanServer.save(this);
+    }
+
+    public static void saveAll(List<Link> linkList) {
+        List<Link> resultToDb = linkList.stream().filter(l -> {
+            return ebeanServer.find(Link.class).where().exampleLike(l).findCount() < 1;
+        }).collect(Collectors.toList());
+        ebeanServer.insertAll(resultToDb);
+    }
+
+    public static Link convert(String rootLink, String url){
+        if (url.length() < rootLink.length()) {
+            return new Link();
+        }
+
+        int beginIndex = url.indexOf(rootLink) + rootLink.length();
+        String relativePath = url.substring(beginIndex);
+        Link link = new Link();
+
+        //  path type like pom jar xml
+        if (!url.endsWith("/")) {
+            String aPath = relativePath.substring(relativePath.lastIndexOf(".") + 1);
+            link.setPathType(aPath);
+        }
+
+        // relativePath: org/springframework/boot/spring-boot-parent/1.3.1.RELEASE/
+        link.setLink(relativePath);
+
+        String[] pathSplitted = relativePath.split("\\/");
+
+        //the level of path org/springframework/boot/spring-boot-parent/1.3.1.RELEASE/ is 5
+        link.setLevel(pathSplitted.length);
+
+        //the parent link of path org/springframework/boot/spring-boot-parent/1.3.1.RELEASE/ is org/springframework/boot/spring-boot-parent/
+        if (pathSplitted.length > 1) {
+            link.setParentLink(StringUtils.join(Arrays.asList(pathSplitted).subList(0, pathSplitted.length - 1), "/") + "/");
+        }
+        return link;
     }
 
     public long getId() {
@@ -113,4 +162,6 @@ public class Link extends Model implements Serializable {
         result = 31 * result + level;
         return result;
     }
+
+
 }
