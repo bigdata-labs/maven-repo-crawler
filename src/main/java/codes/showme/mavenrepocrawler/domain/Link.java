@@ -4,15 +4,15 @@ package codes.showme.mavenrepocrawler.domain;
 import io.ebean.Ebean;
 import io.ebean.EbeanServer;
 import io.ebean.Model;
+import io.ebeaninternal.server.transaction.AutoCommitJdbcTransaction;
+import io.ebeaninternal.server.transaction.JdbcTransaction;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Created by jack on 1/2/17.
@@ -57,10 +57,7 @@ public class Link extends Model implements Serializable {
     }
 
     public static void saveAll(List<Link> linkList) {
-        List<Link> resultToDb = linkList.stream().filter(l -> {
-            return ebeanServer.find(Link.class).where().exampleLike(l).findCount() < 1;
-        }).collect(Collectors.toList());
-        ebeanServer.insertAll(resultToDb);
+        ebeanServer.insertAll(linkList);
     }
 
     public static Link convert(String rootLink, String url){
@@ -163,5 +160,19 @@ public class Link extends Model implements Serializable {
         return result;
     }
 
+    /**
+     * for redis
+     * @return
+     */
+    public String getKey() {
+        return link + parentLink + pathType + level;
+    }
 
+    /**
+     * count all pom's file
+     * @return
+     */
+    public static int allPomFileCount() {
+        return ebeanServer.find(Link.class).where().eq("path_type", "pom").findCount();
+    }
 }

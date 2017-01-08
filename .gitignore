@@ -4,6 +4,7 @@
 **/scala-*.tgz
 provision/files/kafka-monitor/*.jar
 target/
+nohup.out
 .gradle
 build/
 .vagrant
