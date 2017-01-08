@@ -43,7 +43,7 @@ public class Crawler implements PageProcessor {
         crawler.initEbeanServer();
         crawler.jedisPool = createJedisPool();
         Spider spider = Spider.create(crawler);
-        spider.setScheduler(new RedisScheduler(crawler.jedisPool));
+        spider.setScheduler(new RedisScheduler(config.getRedisIP()));
 
         spider.addUrl(ROOT_LINK).thread(threadNum).start();
 

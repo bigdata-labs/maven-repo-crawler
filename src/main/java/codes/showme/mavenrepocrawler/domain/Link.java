@@ -57,10 +57,14 @@ public class Link extends Model implements Serializable {
     }
 
     public static void saveAll(List<Link> linkList) {
-        ebeanServer.insertAll(linkList);
+        try {
+            ebeanServer.insertAll(linkList);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
     }
 
-    public static Link convert(String rootLink, String url){
+    public static Link convert(String rootLink, String url) {
         if (url.length() < rootLink.length()) {
             return new Link();
         }
