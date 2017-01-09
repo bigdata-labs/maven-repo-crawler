@@ -8,3 +8,11 @@ create table links (
   constraint pk_links primary key (id)
 );
 
+create table pom_content (
+  id                            bigint auto_increment not null,
+  content                       longtext,
+  link                          varchar(2048),
+  version                       bigint not null,
+  constraint pk_pom_content primary key (id)
+);
+

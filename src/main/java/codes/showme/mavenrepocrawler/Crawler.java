@@ -33,7 +33,7 @@ public class Crawler implements PageProcessor {
 
     private Site site = Site.me().setSleepTime(1).setTimeOut(10000).setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36").setRetryTimes(3);
 
-    private static final String ROOT_LINK = "https://repo1.maven.org/maven2/";
+    private static final String ROOT_LINK = config.getRootLink();
     private static final int threadNum = 8;
     private static final String SAVE_LINKS_KEY = "saved_links";
 
@@ -117,7 +117,6 @@ public class Crawler implements PageProcessor {
         config.setCurrentUserProvider(() -> "mysql");
         config.setDatabasePlatformName("mysql");
         config.loadFromProperties();
-
 
         config.setDefaultServer(true);
         config.setRegister(true);

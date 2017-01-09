@@ -34,6 +34,11 @@ public class PropertiesConfig implements Configuration {
         }
     }
 
+    @Override
+    public String getRootLink() {
+        return properties.getProperty("root_link", "https://repo1.maven.org/maven2/");
+    }
+
     public Properties getProperties() {
         return properties;
     }

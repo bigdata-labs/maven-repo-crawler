@@ -6,4 +6,5 @@ package codes.showme.mavenrepocrawler.common;
 public interface Configuration {
     String getRedisIP();
     int getRedisPort();
+    String getRootLink();
 }

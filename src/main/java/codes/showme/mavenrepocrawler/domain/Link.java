@@ -4,8 +4,7 @@ package codes.showme.mavenrepocrawler.domain;
 import io.ebean.Ebean;
 import io.ebean.EbeanServer;
 import io.ebean.Model;
-import io.ebeaninternal.server.transaction.AutoCommitJdbcTransaction;
-import io.ebeaninternal.server.transaction.JdbcTransaction;
+import io.ebean.PagedList;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
@@ -24,9 +23,6 @@ public class Link extends Model implements Serializable {
     public static EbeanServer ebeanServer = Ebean.getDefaultServer();
 
     private static final long serialVersionUID = -4211827981727329075L;
-
-
-    private static final Pattern SUFFIXES_PATTERN = Pattern.compile("\\w*\\.(sha1|jar|pom|xml|md5|asc|properties)");
 
 
     @Id
@@ -166,6 +162,7 @@ public class Link extends Model implements Serializable {
 
     /**
      * for redis
+     *
      * @return
      */
     public String getKey() {
@@ -174,9 +171,20 @@ public class Link extends Model implements Serializable {
 
     /**
      * count all pom's file
+     *
      * @return
      */
     public static int allPomFileCount() {
         return ebeanServer.find(Link.class).where().eq("path_type", "pom").findCount();
+    }
+
+    public static PagedList<Link> pomFilePagedList(int pageIndex, int pageSize) {
+        return ebeanServer.find(Link.class)
+                .where()
+                .eq("path_type", "pom")
+                .order().asc("id")
+                .setFirstRow(pageIndex * pageSize)
+                .setMaxRows(pageSize)
+                .findPagedList();
     }
 }
