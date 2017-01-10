@@ -25,11 +25,11 @@ public class PomDownloader {
     private static final Configuration config = new PropertiesConfig();
 
     private static AtomicInteger pageIndex = new AtomicInteger(0);
-    private static final int pageSize = 20;
+    private static final int pageSize = 100;
 
 
     public static void main(String[] args) throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        ExecutorService executorService = Executors.newFixedThreadPool(12);
         for (int i = 0; i < 10; i++) {
             executorService.submit(new DownloaderProcessor());
         }
@@ -62,6 +62,7 @@ public class PomDownloader {
                             return null;
                         })
                         .filter(Objects::nonNull).collect(Collectors.toList());
+
                 PomContent.db().saveAll(pomContentList);
             }
         }
