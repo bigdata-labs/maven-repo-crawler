@@ -3,7 +3,9 @@ create table links (
   link                          varchar(1024),
   parent_link                   varchar(1024),
   path_type                     varchar(1024),
-  level                         integer,
+  group_id                      varchar(128),
+  artifact_id                   varchar(50),
+  artifact_version              varchar(40),
   version                       bigint not null,
   constraint pk_links primary key (id)
 );

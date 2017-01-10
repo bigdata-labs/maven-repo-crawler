@@ -59,7 +59,11 @@ public class Crawler implements PageProcessor {
             List<Link> linkList = allLinks.stream()
                     .filter(l -> !l.equals(currentUrl))
                     .filter(l -> l.trim().length() > 0)
-                    .map(l -> Link.convert(ROOT_LINK, l))
+                    .filter(l -> l.length() > ROOT_LINK.length())
+                    .map(l -> {
+                        int beginIndex = l.indexOf(ROOT_LINK) + ROOT_LINK.length();
+                        return new Link(l.substring(beginIndex));
+                    })
                     .collect(Collectors.toList());
 
 
