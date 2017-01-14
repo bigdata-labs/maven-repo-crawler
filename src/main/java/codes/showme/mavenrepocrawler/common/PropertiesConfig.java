@@ -28,7 +28,7 @@ public class PropertiesConfig implements Configuration {
     public int getRedisPort() {
         try {
             return Integer.valueOf(properties.getProperty("redis_port", "6379"));
-        }catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             e.printStackTrace();
             return 0;
         }
@@ -37,6 +37,16 @@ public class PropertiesConfig implements Configuration {
     @Override
     public String getRootLink() {
         return properties.getProperty("root_link", "https://repo1.maven.org/maven2/");
+    }
+
+    @Override
+    public String getHadoopURL() {
+        return properties.getProperty("hadoop_url", "");
+    }
+
+    @Override
+    public String getLinksDirectory() {
+        return properties.getProperty("links_directory", "");
     }
 
     public Properties getProperties() {

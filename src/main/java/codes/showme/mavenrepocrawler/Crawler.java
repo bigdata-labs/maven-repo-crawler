@@ -7,6 +7,10 @@ import io.ebean.Ebean;
 import io.ebean.EbeanServer;
 import io.ebean.EbeanServerFactory;
 import io.ebean.config.ServerConfig;
+import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import us.codecraft.webmagic.Page;
@@ -16,7 +20,12 @@ import us.codecraft.webmagic.processor.PageProcessor;
 import us.codecraft.webmagic.scheduler.RedisScheduler;
 
 import javax.management.JMException;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.List;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 /**
@@ -30,14 +39,14 @@ public class Crawler implements PageProcessor {
 
     private static final String ROOT_LINK = config.getRootLink();
     private static final int threadNum = 12;
+    String filePath = "/Users/jack/links.txt";
 
     public static void main(String[] args) throws JMException, InterruptedException {
 
         Crawler crawler = new Crawler();
-        crawler.initEbeanServer();
+//        crawler.initEbeanServer();
         Spider spider = Spider.create(crawler);
         spider.setScheduler(new RedisScheduler(config.getRedisIP()));
-
         spider.addUrl(ROOT_LINK).thread(threadNum).start();
 
     }
@@ -52,31 +61,62 @@ public class Crawler implements PageProcessor {
                     .map(l -> currentUrl + l)
                     .collect(Collectors.toList());
 
-
             page.addTargetRequests(getNextTargetRequest(allLinks, currentUrl));
 
-            // filter non persist links
-            List<Link> linkList = allLinks.stream()
+            String linksBlock
+                    = allLinks.stream()
                     .filter(l -> !l.equals(currentUrl))
                     .filter(l -> l.trim().length() > 0)
                     .filter(l -> l.length() > ROOT_LINK.length())
-                    .map(l -> {
-                        int beginIndex = l.indexOf(ROOT_LINK) + ROOT_LINK.length();
-                        return new Link(l.substring(beginIndex));
-                    })
-                    .collect(Collectors.toList());
+                    .map(l -> l.substring(l.indexOf(ROOT_LINK) + ROOT_LINK.length()))
+                    .reduce("\n", (s1, s2) -> s1 + "\n"+s2);
 
+            synchronized (this) {
+                try (Writer fileWriter = new FileWriter(filePath, true)){
+                    fileWriter.write(linksBlock);
+                } catch (IOException e) {
+                    System.out.println("Problem occurs when deleting the directory : " + filePath);
+                    e.printStackTrace();
+                }
+            }
 
-            // save links to db
-            Link.saveAll(linkList);
-
-
-        }catch (Exception e){
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }
 
-    private List<String> getNextTargetRequest(List<String> alllinks, String currentUrl){
+    private static void saveLinksToHDFS(String linksBlock) throws IOException {
+        org.apache.hadoop.conf.Configuration configuration = new org.apache.hadoop.conf.Configuration();
+        // hadoopnamenode -> 192.168.11.154
+        configuration.set("fs.default.name", config.getHadoopURL());
+        FileSystem fs = FileSystem.get(configuration);
+        Path linksSavedPath = new Path(config.getLinksDirectory());
+        if (!fs.exists(linksSavedPath)) {
+            fs.create(linksSavedPath);
+        }
+        try (FSDataOutputStream out = fs.append(linksSavedPath)) {
+            out.write(("\n" + linksBlock).getBytes("UTF-8"));
+        }
+
+    }
+
+    private static void saveLinksToDB(List<String> allLinks, String currentUrl){
+        List<Link> linkList = allLinks.stream()
+                .filter(l -> !l.equals(currentUrl))
+                .filter(l -> l.trim().length() > 0)
+                .filter(l -> l.length() > ROOT_LINK.length())
+                .map(l -> {
+                    int beginIndex = l.indexOf(ROOT_LINK) + ROOT_LINK.length();
+                    return new Link(l.substring(beginIndex));
+                })
+                .collect(Collectors.toList());
+
+
+        // save links to db
+        Link.saveAll(linkList);
+    }
+
+    private List<String> getNextTargetRequest(List<String> alllinks, String currentUrl) {
         return alllinks.stream()
                 .filter(l -> !currentUrl.equals(l))
                 .filter(l -> l.endsWith("/"))
@@ -106,7 +146,7 @@ public class Crawler implements PageProcessor {
 
     }
 
-    public static JedisPool createJedisPool(){
+    public static JedisPool createJedisPool() {
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
         String ip = config.getRedisIP();
         int port = config.getRedisPort();

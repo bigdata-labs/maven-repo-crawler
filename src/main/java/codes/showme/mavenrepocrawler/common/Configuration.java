@@ -7,4 +7,6 @@ public interface Configuration {
     String getRedisIP();
     int getRedisPort();
     String getRootLink();
+    String getHadoopURL();
+    String getLinksDirectory();
 }
